@@ -1,0 +1,189 @@
+#!/usr/bin/env python
+#
+# This module is part of the rtmpSnoop project
+#  https://github.com/andreafabrizi/rtmpSnoop
+#
+# Copyright (C) 2013 Andrea Fabrizi <andrea.fabrizi@gmail.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# as published by the Free Software Foundation; either version 3 of
+# the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 USA
+#
+import os
+from rtmpsnoop_lib.Logger import logger
+
+class amfCommand():
+
+    def __init__(self):
+        self.name = ""
+        self.transaction_id = 0
+        self.args = list()
+
+class amfCommands():
+
+    def __init__(self):
+        self.commands = list()
+        self.RTMP = dict()
+        self.RTMP["extra"] = ""
+
+    #Adds a new amfCommand object
+    def add(self, amfCmd):
+        self.commands.append(amfCmd)
+
+    #Returns the amfCommand object by the name
+    def get(self, name):
+        for c in self.commands:
+            if c.name == name:
+                return c
+
+    #Returns the number of the objects
+    def count(self):
+        return len(self.commands)
+
+    #Prints the amf command object
+    def parse(self):
+
+        try:
+
+            #Parsing the "connect" command arguments
+            amfCmd = self.get("connect")
+
+            for arg in amfCmd.args:
+                if type(arg) == dict:
+                    for prop in arg:
+                        self.RTMP[prop] = arg[prop]
+                else:
+
+                    if type(arg) == str:
+                        extra_type = "S:"
+                    if type(arg) == bool:
+                        extra_type = "B:"
+                    if type(arg) == int:
+                        extra_type = "N:"
+
+                    self.RTMP["extra"] += extra_type + str(arg) + " "
+
+            #Parsing the "play" command arguments
+            amfCmd = self.get("play")
+
+            for arg in amfCmd.args:
+                if arg:
+                    self.RTMP["playPath"] = arg
+                    break
+
+            self.RTMP["url"] = os.path.join(self.RTMP["tcUrl"], self.RTMP["playPath"])
+
+        except Exception as e:
+            logger.error("Error during the RTMP properties parsing: %s" % e)
+
+    def printBar(self):
+        logger.info("*************************************")
+
+    def printOut(self, mode):
+        self.parse()
+        if not mode:
+            self.printDefault()
+        else:
+            if 'm3u' in mode:
+                self.printM3Uentry()
+
+            if 'rtmpdump' in mode:
+                self.printRTMPDump()
+
+            if 'list' in mode:
+                self.printList()
+
+    """
+    Prints the stream properties using the standard list format """
+    def printList(self):
+
+        self.printBar()
+
+        for prop in ["url", "app", "pageUrl", "swfUrl", "tcUrl", "playPath", "flashVer", "extra"]:
+            if self.RTMP.has_key(prop) and len(self.RTMP[prop]) > 0:
+                print "%s: %s" % (prop, self.RTMP[prop])
+
+        self.printBar()
+        print
+
+    """
+    Prints out the RTMP properties using the m3u format """
+    def printM3Uentry(self):
+
+        self.printBar()
+
+        print "#EXTINF:0,1, Stream"
+
+        line = "%s " % self.RTMP["url"]
+
+        for prop in ["app", "pageUrl", "swfUrl", "tcUrl", "playPath"]:
+            if self.RTMP.has_key(prop):
+                line += "%s=%s " % (prop, self.RTMP[prop])
+
+        if self.RTMP.has_key("extra"):
+            line += "conn=%s" % self.RTMP["extra"]
+
+        line += " live=1"
+
+        print line
+        self.printBar()
+        print
+
+    """
+    Prints out the RTMP properties using the rtmpdump format """
+    def printRTMPDump(self):
+
+        self.printBar()
+
+        line = "rtmpdump -r '%s' " % self.RTMP["url"]
+
+        if self.RTMP["app"]:
+            line += "-a '%s' " % self.RTMP["app"]
+        else:
+            line += "-a '' "
+
+        if self.RTMP["tcUrl"]:
+            line += "-t '%s' " % self.RTMP["tcUrl"]
+
+        if self.RTMP["playPath"]:
+            line += "-y '%s' " % self.RTMP["playPath"]
+
+        if self.RTMP["swfUrl"]:
+            line += "-W '%s' " % self.RTMP["swfUrl"]
+
+        if self.RTMP["pageUrl"]:
+            line += "-p '%s' " % self.RTMP["pageUrl"]
+
+        if self.RTMP["flashVer"]:
+            line += "-f '%s' " % self.RTMP["flashVer"]
+
+        if self.RTMP["extra"]:
+            line += "-C %s " % self.RTMP["extra"]
+
+        line += "--live -o "
+        if self.RTMP["playPath"]:
+            filename = os.path.basename(self.RTMP["playPath"])
+            if filename:
+                line += filename
+            else:
+                line += "stream.flv"
+        else:
+            line += "stream.flv"
+
+        print line
+        self.printBar()
+        print
+
+    def printDefault(self):
+        self.printRTMPDump()

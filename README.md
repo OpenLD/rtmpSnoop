@@ -1,9 +1,28 @@
-# rtmpSnoop - The RTMP sniffer!
+# rtmpsnoop - The RTMP sniffer!
 
-**rtmpSnoop** lets you to sniff RTMP streams from live TV, online channels and straming services and dump the RTMP properties in many formats.
+## Difference between Original rtmpSnoop
+
+* Supports more than one output format at the same time.
+* Default output is rtmpdump.
+* Small changes in rtmpdump format.
+* lib/ was changed to rtmpsnoop_lib/ so you can put that in your python library folder.
+* Support multiple videos.
+
+## Contributors
+
+https://github.com/OpenLD/rtmpsnoop/graphs/contributors
+
+## Original repository by Andrea Fabrizi
+
+https://github.com/andreafabrizi/rtmpSnoop
+
+Original for can be found on https://github.com/andreafabrizi/rtmpSnoop and I will try to stay in sync with original upstream as long as it will be possible for me to maintain. At this point there is all features and bugfixes as is in original upstream.
+
+This repo is initially thought to be used in enigma2, it may not work correctly on other architectures.
+Actual code may vary in upcoming commits.
+
+**rtmpsnoop** lets you to sniff RTMP streams from live TV, online channels and straming services and dump the RTMP properties in many formats.
 You can analyse both live and dumped streams.
-
-You can take a look at the [GitHub project page](https://github.com/andreafabrizi/rtmpSnoop/)
 
 ## Features
 
@@ -14,7 +33,6 @@ You can take a look at the [GitHub project page](https://github.com/andreafabriz
 
 ## Requirements
 
-**rtmpSnoop** works both on Windows and Unix.  
 To run it you need only python (at least 2.7 version) and the scapy module. 
 
 **Linux Installation**  
@@ -46,7 +64,7 @@ http://www.secdev.org/projects/scapy/doc/installation.html#windows
 
 ## Get the code
 ```
-git clone https://github.com/andreafabrizi/rtmpSnoop.git
+git clone https://github.com/OpenLD/rtmpsnoop.git
 ```
 
 ## Usage
@@ -54,9 +72,9 @@ git clone https://github.com/andreafabrizi/rtmpSnoop.git
 The syntax is quite simple:
 
 ```
-$python rtmpSnoop.py -h
-usage: rtmpSnoop.py [-h] [-i DEVICE | -f PCAPFILE]
-                    [--out-list | --out-m3u | --out-rtmpdump] [-p PORT]
+$python rtmpsnoop -h
+usage: rtmpsnoop [-h] [-i DEVICE | -f PCAPFILE]
+                    [--out-list ][ --out-m3u ][ --out-rtmpdump] [-p PORT]
                     [--one] [--quiet] [--debug]
 
 rtmpSnoop lets you to grab the RTMP properties from live or dumped streams.
@@ -69,9 +87,9 @@ Input:
   -f PCAPFILE     PCAP file to read from
 
 Output format:
-  --out-list      Prints the RTMP data as list (Default)
+  --out-list      Prints the RTMP data as list
   --out-m3u       Prints the RTMP data as m3u entry
-  --out-rtmpdump  Prints the RTMP data in the rtmpdump format
+  --out-rtmpdump  Prints the RTMP data in the rtmpdump format (Default)
 
 Additional options:
   -p PORT         RTMP port (Default: sniffs on all ports)
@@ -84,49 +102,15 @@ Additional options:
 
 Sniffing on all interfaces, without filters:
 ```
-sudo python rtmpSnoop.py
+sudo python rtmpsnoop
 ```
 
 Sniffing on eth0, and looking for RTMP streams on port 1935 only:
 ```
-sudo python rtmpSnoop.py -i eth0 -p 1935
+sudo python rtmpsnoop -i eth0 -p 1935
 ```
 
 Reading streams from PCAP file:
 ```
-python rtmpSnoop.py -f dump/tv.pcap
+python rtmpsnoop -f dump/tv.pcap
 ```
-
-## Output formats
-
-Default list:
-```
-url: rtmp://192.168.1.1/live/channel?id=123
-app: live
-pageUrl: http://www.test.com/embedded/channel/1/500/380
-swfUrl: http://www.test.eu/static/player.swf
-tcUrl: rtmp://192.168.1.1/live
-playPath: channel?id=123
-flashVer: LNX 11,7,700,203
-extra: S:OK 
-```
-
-m3u entry:
-```
-#EXTINF:0,1, Stream
-rtmp://192.168.1.1/live/channel?id=12345 app=live pageUrl=http://www.test.eu/embedded/channel/1/500/380 
-swfUrl=http://www.test.eu/static/player.swf tcUrl=rtmp://192.168.1.1/live playPath=channel?id=123 conn=S:OK live=1
-```
-
-rtmpdump syntax:
-```
-rtmpdump -r 'rtmp://192.168.1.1/live/channel?id=12345' -a 'live' -t 'rtmp://192.168.1.1/live' 
--y 'channel?id=12345' -W 'http://www.test.eu/scripts/player.swf' -p 'http://www.test.eu/embedded/channel/1/500/380' 
--f 'LNX 11,7,700,203' -C S:OK  --live -o stream.flv
-```
-
-## Donations
-
- If you want to support this project, please consider donating:
- * PayPal: andrea.fabrizi@gmail.com
- * BTC: 1JHCGAMpKqUwBjcT3Kno9Wd5z16K6WKPqG
